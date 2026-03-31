@@ -327,6 +327,17 @@ export default function (pi: ExtensionAPI) {
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
       const targetGate = params.runGate as GateNumber | undefined;
 
+      // Re-read config on every call — it may have been created or updated
+      // after the BDD cycle completed (when releaseState was first initialised).
+      config = loadConfig(ctx.cwd);
+      // Re-apply skipGates to any gates that are still pending.
+      for (const gate of releaseState.gates) {
+        if (gate.status === "pending" && (config.skipGates ?? []).includes(gate.gate as GateNumber)) {
+          gate.status = "skipped";
+          gate.summary = `Gate ${gate.gate} explicitly skipped via skipGates in release.config.json`;
+        }
+      }
+
       const run = async (n: GateNumber) => {
         const gate = releaseState.gates.find((g) => g.gate === n);
         if (!gate) return;

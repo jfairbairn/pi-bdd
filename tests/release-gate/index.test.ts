@@ -13,16 +13,19 @@ function makeMockPi() {
   const handlers: Record<string, Array<Function>> = {};
 
   const mockPi: any = {
-    on: vi.fn((event: string, handler: Function) => {
-      if (!handlers[event]) handlers[event] = [];
-      handlers[event].push(handler);
-    }),
+    on: vi.fn(),
     registerTool: vi.fn((registration: any) => {
       tools[registration.name] = registration;
     }),
     registerCommand: vi.fn(),
     exec: vi.fn(),
-    events: { emit: vi.fn(), on: vi.fn() },
+    events: {
+      emit: vi.fn(),
+      on: vi.fn((event: string, handler: Function) => {
+        if (!handlers[event]) handlers[event] = [];
+        handlers[event].push(handler);
+      }),
+    },
     sendUserMessage: vi.fn(),
   };
 
