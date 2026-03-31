@@ -241,6 +241,10 @@ export default function (pi: ExtensionAPI) {
 
     const gate2 = releaseState.gates.find((g) => g.gate === 2);
     if (!gate2 || gate2.status === "skipped") return;
+    // Gate 2 already resolved — don't overwrite a passed/failed status.
+    // This prevents a re-fired scan (same diff, loop scenario) from resetting
+    // a gate that was already manually reviewed and passed.
+    if (gate2.status === "passed" || gate2.status === "failed") return;
 
     const threshold = "high";
     const severityOrder: Record<string, number> = { critical: 5, high: 4, medium: 3, low: 2, info: 1, none: 0 };
