@@ -20,8 +20,7 @@
   },
   "pi": {
     "extensions": [
-      "./extensions/**/*.ts",
-      "!./extensions/**/*.test.ts"
+      "./extensions"
     ],
     "skills": [
       "./skills"
