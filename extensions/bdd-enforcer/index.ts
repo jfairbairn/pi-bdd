@@ -57,6 +57,8 @@ interface BDDStateDetails {
   bugDescription?: string;
   bugExpected?: string;
   issueRef?: string;
+  // Refactor boundary
+  boundarySpecs?: string[];
 }
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -112,10 +114,12 @@ You have two options:
 2. Begin the next inner layer: write a spec for a dependency, then run_tests to confirm red`,
 
   REFACTOR: `Refactoring phase.
+- Boundary specs are write-locked — they define the public behavioural contract that must be preserved
+- You may freely create, edit, or delete any production file or non-boundary test file
 - Run tests before and after every change to confirm they stay green
-- Only refactor code written in this cycle — do not expand scope
-- No new behaviour, no new tests — if you spot a missing case, write a spec for it in the next cycle
-- When complete: set_bdd_phase → IDLE (or AWAITING_RED for the next scenario, then run_tests to confirm RED)`,
+- If tests go red: revert immediately — the change altered observable behaviour
+- No new externally-visible behaviour — if you spot a missing case, write a spec for it in the next cycle
+- When complete: set_bdd_phase → IDLE (or AWAITING_RED for the next scenario)`,
 };
 
 // ─── Config loading ───────────────────────────────────────────────────────────
@@ -379,6 +383,25 @@ export default function (pi: ExtensionAPI) {
       return { block: true, reason: msg };
     }
 
+    // In REFACTOR, boundary spec files are write-locked.
+    if (state.phase === "REFACTOR" && state.boundarySpecs?.length) {
+      let rel = filePath.startsWith("/") ? path.relative(ctx.cwd, filePath) : filePath;
+      rel = rel.startsWith("./") ? rel.slice(2) : rel;
+
+      for (const spec of state.boundarySpecs) {
+        const normSpec = spec.startsWith("./") ? spec.slice(2) : spec;
+        if (rel === normSpec) {
+          const msg =
+            `BLOCKED: Cannot write to boundary spec "${filePath}" during REFACTOR.\n` +
+            `Boundary specs define the behavioural contract this refactor must preserve — they are write-locked.\n` +
+            `If the behaviour itself needs to change, exit REFACTOR, update the spec (confirm RED), ` +
+            `implement, return to GREEN, then refactor.`;
+          ctx.ui.notify(`🚫 Boundary spec write blocked: ${path.basename(filePath)}`, "warning");
+          return { block: true, reason: msg };
+        }
+      }
+    }
+
     return undefined;
   });
 
@@ -601,6 +624,16 @@ export default function (pi: ExtensionAPI) {
       layer: Type.Optional(
         Type.String({ description: "Name of the layer or component (e.g. 'AuthService', 'LoginForm')." }),
       ),
+      boundarySpecs: Type.Optional(
+        Type.Array(Type.String(), {
+          description:
+            "Spec file paths that define the behavioural boundary of this refactor. " +
+            "These files are write-locked during REFACTOR — they represent the public contract " +
+            "that must be preserved. Required when phase is REFACTOR. " +
+            "Typically the outermost spec(s) written before this implementation cycle: " +
+            "acceptance tests, API contract tests, or integration tests for the scope being refactored.",
+        }),
+      ),
     }),
 
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
@@ -652,13 +685,41 @@ export default function (pi: ExtensionAPI) {
           to: "IDLE",
           ...outgoing,
         });
+      } else if (params.phase === "REFACTOR") {
+        state = {
+          ...state,
+          phase: "REFACTOR",
+          boundarySpecs: params.boundarySpecs,
+        };
+
+        if (!params.boundarySpecs?.length) {
+          ctx.ui.notify(
+            "⚠️ No boundary specs declared for this refactor.\n" +
+            "Pass boundarySpecs to write-lock the public behavioural contract.\n" +
+            "Without a declared boundary the system cannot enforce that external behaviour is preserved.",
+            "warning",
+          );
+        }
+
+        updateStatus(ctx);
+
+        pi.events.emit("bdd:phase_change", {
+          from: prevPhase,
+          to: "REFACTOR",
+          cycleType: state.cycleType ?? "feature",
+          featureName: state.featureName,
+          layer: state.layer,
+          issueRef: state.issueRef,
+        });
       } else {
+        // AWAITING_RED — clear boundary specs from the previous refactor cycle.
         state = {
           ...state,
           phase: params.phase,
-          cycleType: "feature", // set_bdd_phase always starts a feature cycle
+          cycleType: "feature",
           featureName: params.featureName ?? state.featureName,
           layer: params.layer ?? state.layer,
+          boundarySpecs: undefined,
         };
 
         updateStatus(ctx);
