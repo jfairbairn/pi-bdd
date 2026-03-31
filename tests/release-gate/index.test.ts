@@ -42,6 +42,91 @@ function makeMockCtx(cwd: string) {
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
+// ── Helpers ─────────────────────────────────────────────────────
+
+/** Fire the bdd:phase_change event to IDLE, initialising release state. */
+async function fireIdleTransition(handlers: Record<string, Array<Function>>) {
+  await handlers["bdd:phase_change"][0]({
+    from: "REFACTOR",
+    to: "IDLE",
+    cycleType: "feature",
+    featureName: "test-feature",
+  });
+}
+
+/** Fire security:scan_complete with needsManualReview = true. */
+function fireScanComplete(
+  handlers: Record<string, Array<Function>>,
+  needsManualReview = true,
+) {
+  handlers["security:scan_complete"][0]({
+    findings: [],
+    maxSeverity: "none",
+    needsManualReview,
+    layers: [],
+  });
+}
+
+describe("security:scan_complete — gate 2 idempotency", () => {
+  it("does not reset gate 2 to pending after it has been manually passed", async () => {
+    const { mockPi, tools, handlers } = makeMockPi();
+    extensionFactory(mockPi);
+
+    await fireIdleTransition(handlers);
+
+    // First scan: gate2 goes to pending (manual review required)
+    fireScanComplete(handlers, true);
+    expect(
+      mockPi.sendUserMessage.mock.calls.some((c: any[]) =>
+        c[0].includes("manual security review"),
+      ),
+    ).toBe(true);
+
+    // Human passes gate 2
+    const ctx = makeMockCtx("/project");
+    await tools["mark_gate_passed"].execute(
+      "t1",
+      { gate: 2, notes: "reviewed" },
+      undefined,
+      vi.fn(),
+      ctx,
+    );
+
+    // Second scan fires (same diff, loop scenario)
+    mockPi.sendUserMessage.mockClear();
+    fireScanComplete(handlers, true);
+
+    // Gate 2 should remain passed — no new manual review prompt
+    expect(
+      mockPi.sendUserMessage.mock.calls.some((c: any[]) =>
+        c[0].includes("manual security review"),
+      ),
+    ).toBe(false);
+  });
+
+  it("does not reset gate 2 after it passes cleanly (no manual review)", async () => {
+    const { mockPi, tools, handlers } = makeMockPi();
+    extensionFactory(mockPi);
+
+    await fireIdleTransition(handlers);
+
+    // Gate 2 passes cleanly
+    fireScanComplete(handlers, false);
+
+    mockPi.sendUserMessage.mockClear();
+
+    // Second scan fires
+    fireScanComplete(handlers, false);
+
+    // Should not re-send the staging message
+    expect(
+      mockPi.sendUserMessage.mock.calls.some((c: any[]) =>
+        c[0].includes("check_release_readiness"),
+      ),
+    ).toBe(false);
+  });
+});
+
 describe("check_release_readiness — skipGates config reload", () => {
   it("re-applies skipGates from release.config.json written after the BDD cycle completed", async () => {
     const { mockPi, tools, handlers } = makeMockPi();
