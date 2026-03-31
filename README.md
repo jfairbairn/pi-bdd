@@ -1,6 +1,10 @@
 # pi-bdd
 
+**Status:** implemented
+
 Agentic software delivery system for the [pi coding agent](https://github.com/badlogic/pi-mono). Enforces outside-in BDD discipline, runs security scans, orchestrates staged deployment, and measures product success — from requirements to production.
+
+**Design:** A set of pi extensions that intercept tool calls and session events to enforce the BDD state machine. The `bdd-enforcer` extension owns the write gate (blocks production writes before RED), phase transitions (driven only by real test output), and the REFACTOR boundary (write-locks declared spec files). Other extensions layer on security scanning, release gates, and telemetry access — all wired through the same event bus.
 
 ## What It Does
 

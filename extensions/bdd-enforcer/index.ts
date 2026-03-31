@@ -143,20 +143,24 @@ function loadConfig(cwd: string): BDDConfig {
 
 // ─── Path classification ──────────────────────────────────────────────────────
 
+/** Normalise a file path to a cwd-relative string with no leading "./". */
+function normalisePath(filePath: string, cwd: string): string {
+  const rel = filePath.startsWith("/") ? path.relative(cwd, filePath) : filePath;
+  return rel.startsWith("./") ? rel.slice(2) : rel;
+}
+
 function classifyPath(
   filePath: string,
   config: BDDConfig,
   cwd: string,
 ): "production" | "test" | "unknown" {
-  // Normalise to relative path for matching
-  let rel = filePath.startsWith("/") ? path.relative(cwd, filePath) : filePath;
-  // Strip leading ./
-  rel = rel.startsWith("./") ? rel.slice(2) : rel;
+  const rel = normalisePath(filePath, cwd);
 
   // Check test file name patterns first (e.g. *.test.ts)
   for (const pattern of config.testFilePatterns) {
     if (new RegExp(pattern).test(rel)) return "test";
   }
+
 
   // Check path prefixes
   for (const p of config.testPaths) {
@@ -306,6 +310,9 @@ export default function (pi: ExtensionAPI) {
       ...bugContext,
       state.featureName ? `Active feature: ${state.featureName}` : "",
       state.layer ? `Current layer: ${state.layer}` : "",
+      state.boundarySpecs?.length
+        ? `Boundary specs (write-locked): ${state.boundarySpecs.join(", ")}`
+        : "",
       state.testResult
         ? `Last test run: ${state.testResult.passed} passed, ${state.testResult.failed} failed`
         : "",
@@ -385,11 +392,10 @@ export default function (pi: ExtensionAPI) {
 
     // In REFACTOR, boundary spec files are write-locked.
     if (state.phase === "REFACTOR" && state.boundarySpecs?.length) {
-      let rel = filePath.startsWith("/") ? path.relative(ctx.cwd, filePath) : filePath;
-      rel = rel.startsWith("./") ? rel.slice(2) : rel;
+      const rel = normalisePath(filePath, ctx.cwd);
 
       for (const spec of state.boundarySpecs) {
-        const normSpec = spec.startsWith("./") ? spec.slice(2) : spec;
+        const normSpec = normalisePath(spec, ctx.cwd);
         if (rel === normSpec) {
           const msg =
             `BLOCKED: Cannot write to boundary spec "${filePath}" during REFACTOR.\n` +
@@ -997,6 +1003,9 @@ export default function (pi: ExtensionAPI) {
         state.issueRef ? `Issue:   ${state.issueRef}` : "",
         state.featureName ? `Feature: ${state.featureName}` : "",
         state.layer ? `Layer:   ${state.layer}` : "",
+        state.boundarySpecs?.length
+          ? `Boundary: ${state.boundarySpecs.join(", ")}`
+          : "",
         state.testResult
           ? `Tests:   ${state.testResult.passed} passed, ${state.testResult.failed} failed`
           : "",
