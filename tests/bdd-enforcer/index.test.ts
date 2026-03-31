@@ -7,7 +7,7 @@
  * See bug: "crash when trying to render some other status line"
  */
 import { describe, it, expect, vi } from "vitest";
-import extensionFactory from "./index.js";
+import extensionFactory from "../../extensions/bdd-enforcer/index.js";
 
 // ── Minimal mock of ExtensionAPI ─────────────────────────────────────────────
 
