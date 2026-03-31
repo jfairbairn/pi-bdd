@@ -1,0 +1,37 @@
+{
+  "_comment": "Copy to .pi/release.config.json. Configure staging and production deploy commands for your Coolify/Docker Compose setup.",
+
+  "staging": {
+    "_deployCommand_options": "Coolify API, git push, docker compose, or any shell command",
+    "deployCommand": "curl -sf -X POST 'https://coolify.yourdomain.com/api/v1/deploy?uuid=STAGING_APP_UUID&force=false' -H 'Authorization: Bearer $COOLIFY_API_TOKEN'",
+    "url": "https://staging.myapp.com",
+    "healthCheckPath": "/health",
+
+    "migrationsCommand": "docker compose -f docker-compose.staging.yml exec -T app bundle exec rails db:migrate",
+    "_migrationsCommand_node": "docker compose -f docker-compose.staging.yml exec -T app npx prisma migrate deploy",
+    "_migrationsCommand_python": "docker compose -f docker-compose.staging.yml exec -T app python manage.py migrate",
+
+    "testCommand": "npm run test:integration -- --env=staging",
+    "_testCommand_note": "Integration/acceptance tests run against the staging URL. Must exit 0 on pass.",
+
+    "_sanitisationCheckQuery_note": "SQL command that returns 0 if staging data is properly sanitised. Gates deployment if > 0.",
+    "sanitisationCheckQuery": "psql $STAGING_DATABASE_URL -t -c \"SELECT COUNT(*) FROM users WHERE email NOT LIKE '%@staging.%' AND email NOT LIKE '%@example.%' AND email NOT LIKE 'user_%'\" 2>/dev/null | tr -d ' '"
+  },
+
+  "production": {
+    "deployCommand": "curl -sf -X POST 'https://coolify.yourdomain.com/api/v1/deploy?uuid=PRODUCTION_APP_UUID&force=false' -H 'Authorization: Bearer $COOLIFY_API_TOKEN'",
+    "url": "https://myapp.com",
+    "healthCheckPath": "/health",
+    "migrationsCommand": "docker compose exec -T app bundle exec rails db:migrate"
+  },
+
+  "nonFunctional": {
+    "_testCommand_note": "Leave null to skip Gate 3. Command must exit 0 on pass.",
+    "testCommand": null,
+    "_testCommand_k6_example": "k6 run --vus 50 --duration 60s load-test.js",
+    "latencyThresholdMs": 500
+  },
+
+  "_skipGates_note": "Gate numbers to skip entirely. E.g. skip Gate 3 if no load tests configured.",
+  "skipGates": []
+}

@@ -1,0 +1,84 @@
+{
+  "_comment": "Copy to .pi/telemetry.config.json and fill in your stack. Remove sections you don't use.",
+
+  "analytics": {
+    "_comment": "PostHog is recommended: free at scale (self-host), queryable via HogQL (SQL over events), navigable in the PostHog UI by human operators. The same data, accessible at multiple levels of abstraction.",
+    "provider": "posthog",
+    "host": "https://app.posthog.com",
+    "projectId": "YOUR_PROJECT_ID",
+    "apiKeyEnvVar": "POSTHOG_API_KEY"
+  },
+
+  "_analytics_self_hosted": {
+    "provider": "posthog",
+    "host": "https://posthog.yourdomain.com",
+    "projectId": "1",
+    "apiKeyEnvVar": "POSTHOG_API_KEY"
+  },
+
+  "_analytics_custom": {
+    "provider": "custom",
+    "queryEndpoint": "https://analytics.yourdomain.com/api/query",
+    "authHeaderEnvVar": "ANALYTICS_TOKEN"
+  },
+
+  "logs": {
+    "_provider_options": "cloudwatch | kubectl | heroku | file | custom",
+    "provider": "cloudwatch",
+    "logGroup": "/app/production",
+    "region": "us-east-1"
+  },
+
+  "_logs_kubectl": {
+    "provider": "kubectl",
+    "deployment": "deployment/api",
+    "namespace": "production"
+  },
+
+  "_logs_heroku": {
+    "provider": "heroku",
+    "app": "my-app-production"
+  },
+
+  "_logs_file": {
+    "provider": "file",
+    "filePath": "/var/log/app/production.log"
+  },
+
+  "_logs_custom": {
+    "provider": "custom",
+    "command": "my-log-cli query --pattern '{pattern}' --lines {lines} --since {since}"
+  },
+
+  "errors": {
+    "_provider_options": "sentry | file | custom",
+    "provider": "sentry",
+    "orgSlug": "my-org",
+    "projectSlug": "my-project",
+    "tokenEnvVar": "SENTRY_AUTH_TOKEN"
+  },
+
+  "_errors_file": {
+    "provider": "file",
+    "filePath": "/var/log/app/production.log"
+  },
+
+  "metrics": {
+    "_provider_options": "cloudwatch | datadog | prometheus | custom",
+    "provider": "datadog",
+    "apiKeyEnvVar": "DD_API_KEY",
+    "appKeyEnvVar": "DD_APP_KEY",
+    "site": "datadoghq.com"
+  },
+
+  "_metrics_cloudwatch": {
+    "provider": "cloudwatch",
+    "namespace": "MyApp/Production",
+    "region": "us-east-1"
+  },
+
+  "_metrics_prometheus": {
+    "provider": "prometheus",
+    "url": "http://prometheus.monitoring.svc.cluster.local:9090"
+  }
+}

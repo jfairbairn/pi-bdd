@@ -18,6 +18,7 @@
 
 import { StringEnum } from "@mariozechner/pi-ai";
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
+import { Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -561,16 +562,16 @@ export default function (pi: ExtensionAPI) {
 
     renderCall(args, theme) {
       const cmd = args.command ? theme.fg("muted", args.command) : theme.fg("dim", config.testCommand);
-      return { toString: () => `${theme.bold("run_tests")} ${cmd}` } as never;
+      return new Text(`${theme.bold("run_tests")} ${cmd}`, 0, 0);
     },
 
     renderResult(result, _opts, theme) {
       const details = result.details as BDDStateDetails | undefined;
-      if (!details) return { toString: () => "" } as never;
+      if (!details) return new Text("", 0, 0);
       const label = PHASE_LABELS[details.phase];
       const tr = details.testResult;
       const counts = tr ? `  ${theme.fg("success", `${tr.passed} passed`)}  ${tr.failed > 0 ? theme.fg("error", `${tr.failed} failed`) : ""}` : "";
-      return { toString: () => `${label}${counts}` } as never;
+      return new Text(`${label}${counts}`, 0, 0);
     },
   });
 

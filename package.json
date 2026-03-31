@@ -2,16 +2,47 @@
   "name": "@jfairbairn/pi-bdd",
   "version": "0.4.0",
   "description": "Agentic software delivery system: outside-in BDD enforcement, security scanning, staged deployment, and product measurement for the pi coding agent",
-  "keywords": ["pi-package", "bdd", "tdd", "agentic", "software-delivery"],
+  "keywords": [
+    "pi-package",
+    "bdd",
+    "tdd",
+    "agentic",
+    "software-delivery"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/jfairbairn/pi-bdd"
+    "url": "git+https://github.com/jfairbairn/pi-bdd.git"
   },
   "author": "James Fairbairn",
   "license": "MIT",
+  "scripts": {
+    "test": "vitest run --reporter=verbose"
+  },
   "pi": {
-    "extensions": ["./extensions"],
-    "skills": ["./skills"],
-    "prompts": ["./prompts"]
+    "extensions": [
+      "./extensions"
+    ],
+    "skills": [
+      "./skills"
+    ],
+    "prompts": [
+      "./prompts"
+    ]
+  },
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/jfairbairn/pi-bdd/issues"
+  },
+  "homepage": "https://github.com/jfairbairn/pi-bdd#readme",
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.2",
+    "vitest": "^4.1.2"
   }
 }

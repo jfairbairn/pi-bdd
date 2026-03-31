@@ -1,0 +1,33 @@
+{
+  "_comment": "Optional. Copy to .pi/security.config.json. All fields have sensible defaults.",
+
+  "secrets": "gitleaks",
+  "_secrets_options": "gitleaks | trufflehog | grep | none",
+  "_secrets_note": "gitleaks is recommended (brew install gitleaks). Falls back to grep pattern matching if not installed.",
+
+  "sast": "semgrep",
+  "_sast_options": "semgrep | none",
+  "_sast_note": "semgrep with p/security-audit ruleset (brew install semgrep). Covers JS/TS, Python, Ruby, Go, Java and more.",
+
+  "dependencies": true,
+  "_dependencies_note": "Auto-detects stack from package files. Supports npm, pip, bundler, go, cargo.",
+
+  "blockingThreshold": "high",
+  "_blockingThreshold_options": "critical | high | medium | low",
+  "_blockingThreshold_note": "Findings at or above this severity are flagged as deployment blockers.",
+
+  "autoRunOnIdle": true,
+  "_autoRunOnIdle_note": "Prompt a security scan after every BDD cycle completes.",
+
+  "manualReviewPatterns": [
+    "auth", "authoris", "authoriz", "authenticat",
+    "payment", "billing", "stripe", "checkout",
+    "crypto", "encrypt", "decrypt", "cipher", "hash",
+    "password", "passwd", "credential",
+    "pii", "gdpr", "personal_data",
+    "session", "cookie", "jwt", "token",
+    "admin", "privilege", "permission", "role",
+    "secret", "private_key", "certificate",
+    "mcp", "register.*tool", "tool.*register"
+  ]
+}
