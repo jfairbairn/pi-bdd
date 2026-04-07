@@ -43,13 +43,10 @@ Refactoring means improving the structure of code without changing its behaviour
 When the code is clean and tests are green:
 
 ```
-run_tests()                    → confirm GREEN
-set_bdd_phase(IDLE)            → triggers IDLE documentation reminder
-check_docs(atIdle: true)       → verify component docs, ROADMAP, and PRODUCT.md
-update_roadmap(implemented)    → move feature to implemented
-update_doc_status(implemented) → set component status
+run_tests()             → confirm GREEN
+set_bdd_phase(IDLE)     → BDD cycle complete
 ```
 
 The git checkpoint extension will auto-commit the refactor.
 
-If starting the next scenario immediately, use `set_bdd_phase("AWAITING_RED")` instead — but ensure PRODUCT.md and documentation are current before beginning the next cycle.
+If starting the next scenario immediately, use `set_bdd_phase("AWAITING_RED")` instead.

@@ -63,14 +63,13 @@ Use `/bugfix` or describe the bug. Before writing anything:
 ## Step-by-Step: Starting a New Feature
 
 1. Use `/feature` template or describe the feature to establish what needs to be built
-2. Load `measurement-design` — confirm success conditions are specific and measurable, and derive the telemetry spec. Update PRODUCT.md before writing any spec or code.
-3. Identify the outermost boundary (acceptance test? API endpoint? UI component?)
-4. Load `bdd-testing-strategy` to determine the right spec style for that boundary
-5. Write the outer spec file (functional behaviour AND telemetry event emission)
-6. Call `set_bdd_phase("AWAITING_RED", featureName: "<name>", layer: "<outer-layer>")`
-7. Call `run_tests(layer: "<outer-layer>")` → system confirms RED
-8. Identify what inner layer the outer spec depends on
-9. Repeat the inner loop:
+2. Identify the outermost boundary (acceptance test? API endpoint? UI component?)
+3. Load `bdd-testing-strategy` to determine the right spec style for that boundary
+4. Write the outer spec file
+5. Call `set_bdd_phase("AWAITING_RED", featureName: "<name>", layer: "<outer-layer>")`
+6. Call `run_tests(layer: "<outer-layer>")` → system confirms RED
+7. Identify what inner layer the outer spec depends on
+8. Repeat the inner loop:
    a. `set_bdd_phase("AWAITING_RED", layer: "<inner-layer>")`
    b. Write inner spec
    c. `run_tests(layer: "<inner-layer>")` → confirm RED
@@ -78,30 +77,14 @@ Use `/bugfix` or describe the bug. Before writing anything:
    e. `run_tests(layer: "<inner-layer>")` → confirm GREEN
    f. `set_bdd_phase("REFACTOR")` → refactor → `run_tests` → confirm GREEN
    g. `set_bdd_phase("AWAITING_RED")` for next inner layer, or proceed to outer
-10. Implement outer layer
-11. `run_tests()` (all tests, not just focused) → confirm outer GREEN
-12. `set_bdd_phase("REFACTOR")` → refactor → `run_tests` → GREEN
-13. `set_bdd_phase("IDLE")` → triggers documentation check + security scan prompt
-14. `check_docs(atIdle: true)` → `update_roadmap` → `update_doc_status`
-15. `security_scan` → resolve any critical/high findings before deployment
-16. `/release` → run the six release gates → deploy to production when all pass
+9. Implement outer layer
+10. `run_tests()` (all tests, not just focused) → confirm outer GREEN
+11. `set_bdd_phase("REFACTOR")` → refactor → `run_tests` → GREEN
+12. `set_bdd_phase("IDLE")` → BDD cycle complete
 
-## After IDLE: The Release Process
+## After IDLE
 
-`set_bdd_phase("IDLE")` ends the development cycle. Everything through to staging then proceeds automatically:
-
-1. **Security scan** fires automatically (follow-up message after IDLE)
-2. **If Gate 2 passes cleanly** → the system automatically instructs the agent to run `check_release_readiness`, which runs Gates 3, 4, and 5 in parallel:
-   - Gate 3 (non-functional) — load/perf tests
-   - Gate 4 (staging) — deploy → sanitise verify → migrate → test suite on real data
-   - Gate 5 (measurement) — PostHog success conditions queryable
-3. **If Gate 2 requires manual review** → system pauses, you review the diff, call `mark_gate_passed(2)`, then `check_release_readiness` proceeds
-4. **Gate 6** — the single human checkpoint before production: rollback readiness checklist
-5. Production deploy runs, ROADMAP updated to deployed
-
-**Staging is autonomous when security passes. You only touch the process twice: once if manual security review is flagged, once at Gate 6 before production.**
-
-Use `/release` at any time to see current gate status.
+`set_bdd_phase("IDLE")` ends the coding cycle. What happens next depends on what other lifecycle loop plugins are installed (delivery, observation, etc.). If nothing else is configured, you're done — the code is tested and committed.
 
 ## On "Minimum Code to Go Green"
 

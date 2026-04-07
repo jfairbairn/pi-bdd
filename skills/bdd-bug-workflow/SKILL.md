@@ -137,15 +137,7 @@ report_bug()           →  AWAITING_RED  (bug registered)
 Write regression test  →  run_tests()  →  RED confirmed
 Fix implementation     →  run_tests()  →  GREEN confirmed
 set_bdd_phase(REFACTOR) → refactor     →  run_tests()  → GREEN
-set_bdd_phase(IDLE)    →  check_docs() + update_roadmap()
+set_bdd_phase(IDLE)    →  cycle complete
 ```
-
-## Documentation at IDLE (Bug Cycles)
-
-At IDLE after a bug fix:
-- `check_docs`: verify the component README covers the fixed behaviour (or cross-references the new regression test)
-- `update_roadmap`: no entry needed for most bugs; add one if the bug revealed a missing specified behaviour that should be tracked
-- If Type 3 (Requirements): update the relevant feature description/scenario to reflect the revised spec
-- If the fix revealed a broader spec gap: consider whether other scenarios need adding
 
 The regression test *is* the primary documentation of what was wrong and what the correct behaviour is. The semantic commit message (`fix: <description>`) is what the CI/build system uses to generate release notes from git history.

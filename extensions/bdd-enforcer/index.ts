@@ -324,26 +324,22 @@ export default function (pi: ExtensionAPI) {
 
   // ── Session events ────────────────────────────────────────────────────────
 
+  // ── Lifecycle registration ────────────────────────────────────────────
+  //
+  // Register as a coding loop implementation in the pi-software-lifecycle
+  // coordination layer (if installed). This is a fire-and-forget emit —
+  // if pi-software-lifecycle is not installed, the event is simply ignored.
+
+  pi.events.emit("lifecycle:register", {
+    loop: "coding",
+    name: "BDD",
+    description: "Outside-in BDD with red-green-refactor enforcement",
+  });
+
   pi.on("session_start", async (_event, ctx) => {
     config = loadConfig(ctx.cwd);
     state = reconstructState(ctx);
     updateStatus(ctx);
-
-    // First-run detection: if neither AGENTS.md nor bdd.config.json exist,
-    // this is likely a fresh project. Prompt setup.
-    const hasAgentsMd = fs.existsSync(path.join(ctx.cwd, "AGENTS.md")) ||
-                        fs.existsSync(path.join(ctx.cwd, "CLAUDE.md"));
-    const hasBddConfig = fs.existsSync(path.join(ctx.cwd, ".pi", "bdd.config.json")) ||
-                         fs.existsSync(path.join(ctx.cwd, "bdd.config.json"));
-
-    if (!hasAgentsMd && !hasBddConfig) {
-      ctx.ui.notify(
-        "👋 Welcome to pi-bdd! This looks like a new project.\n\n" +
-        "Run /bdd-setup to create AGENTS.md, project config files, and templates.\n" +
-        "Then run setup_precommit to install pre-commit secrets detection.",
-        "info",
-      );
-    }
   });
 
   pi.on("session_switch", async (_event, ctx) => {
@@ -677,19 +673,25 @@ export default function (pi: ExtensionAPI) {
         };
 
         state = { _tool: "bdd_state", phase: "IDLE" };
-        ctx.ui.notify(
-          "📋 Cycle complete. Don't forget:\n" +
-          "  1. check_docs(atIdle: true) — verifies docs, ROADMAP, and PRODUCT.md success conditions\n" +
-          "  2. update_roadmap — move feature to implemented\n" +
-          "  3. update_doc_status — set component status to implemented",
-          "info",
-        );
+        ctx.ui.notify("✅ BDD cycle complete.", "info");
         updateStatus(ctx);
 
         pi.events.emit("bdd:phase_change", {
           from: prevPhase,
           to: "IDLE",
           ...outgoing,
+        });
+
+        // Emit lifecycle handoff: coding → delivery
+        // If pi-software-lifecycle is installed, delivery plugins will pick this up.
+        pi.events.emit("lifecycle:coding_complete", {
+          type: "lifecycle:coding_complete",
+          artifact: outgoing.featureName ?? outgoing.layer ?? "cycle",
+          testsPassing: true,
+          meta: {
+            cycleType: outgoing.cycleType,
+            issueRef: outgoing.issueRef,
+          },
         });
       } else if (params.phase === "REFACTOR") {
         state = {
@@ -923,44 +925,6 @@ export default function (pi: ExtensionAPI) {
         ".pi/bdd.config.json",
       );
 
-      // ── Create PRODUCT.md and ROADMAP.md ──────────────────────────────────
-      const productTmpl = path.join(pkgRoot, "templates", "PRODUCT.md");
-      const roadmapTmpl = path.join(pkgRoot, "templates", "ROADMAP.md");
-
-      if (fs.existsSync(productTmpl)) {
-        ensure(path.join(cwd, "PRODUCT.md"), fs.readFileSync(productTmpl, "utf8"), "PRODUCT.md");
-      }
-      if (fs.existsSync(roadmapTmpl)) {
-        ensure(path.join(cwd, "ROADMAP.md"), fs.readFileSync(roadmapTmpl, "utf8"), "ROADMAP.md");
-      }
-
-      // ── Copy release and telemetry config templates as examples ───────────
-      const releaseTmpl = path.join(pkgRoot, "templates", "release.config.json");
-      const telemetryTmpl = path.join(pkgRoot, "templates", "telemetry.config.json");
-      const securityTmpl = path.join(pkgRoot, "templates", "security.config.json");
-
-      if (fs.existsSync(releaseTmpl)) {
-        ensure(
-          path.join(cwd, ".pi", "release.config.json.example"),
-          fs.readFileSync(releaseTmpl, "utf8"),
-          ".pi/release.config.json.example",
-        );
-      }
-      if (fs.existsSync(telemetryTmpl)) {
-        ensure(
-          path.join(cwd, ".pi", "telemetry.config.json.example"),
-          fs.readFileSync(telemetryTmpl, "utf8"),
-          ".pi/telemetry.config.json.example",
-        );
-      }
-      if (fs.existsSync(securityTmpl)) {
-        ensure(
-          path.join(cwd, ".pi", "security.config.json.example"),
-          fs.readFileSync(securityTmpl, "utf8"),
-          ".pi/security.config.json.example",
-        );
-      }
-
       // ── Summary ───────────────────────────────────────────────────────────
       const lines = [
         `✅ pi-bdd setup complete. Detected stack: ${stackHint}`,
@@ -970,15 +934,8 @@ export default function (pi: ExtensionAPI) {
           : "All files already exist — nothing created.",
         "",
         "Next steps:",
-        "  1. Edit AGENTS.md — fill in your stack details and URLs",
-        "  2. Review .pi/bdd.config.json — adjust paths if needed",
-        "  3. Run: setup_precommit — installs pre-commit secrets detection",
-        "  4. When ready for staging/deploy: fill in .pi/release.config.json",
-        "     (copy from .pi/release.config.json.example)",
-        "  5. For product analytics: fill in .pi/telemetry.config.json",
-        "     (copy from .pi/telemetry.config.json.example)",
-        "",
-        "Start building: use /feature to begin your first BDD cycle.",
+        "  1. Review .pi/bdd.config.json — adjust paths if needed",
+        "  2. Use /feature to begin your first BDD cycle",
       ];
 
       ctx.ui.notify(lines.join("\n"), "info");

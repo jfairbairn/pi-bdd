@@ -1,9 +1,25 @@
 import { defineConfig } from "vitest/config";
 import path from "node:path";
+import { execSync } from "node:child_process";
 
-// Pi packages live inside the pi-coding-agent's own node_modules
-const piModules = "/home/james/.nodenv/versions/24.14.0/lib/node_modules/@mariozechner/pi-coding-agent/node_modules";
-const piRoot = "/home/james/.nodenv/versions/24.14.0/lib/node_modules/@mariozechner/pi-coding-agent";
+// Find the global pi-coding-agent installation
+function findPiRoot(): string {
+  // Try global node_modules first
+  const globalRoot = execSync("npm root -g", { encoding: "utf8" }).trim();
+  const candidate = path.join(globalRoot, "@mariozechner/pi-coding-agent");
+  try {
+    const { statSync } = require("node:fs");
+    statSync(path.join(candidate, "dist/index.js"));
+    return candidate;
+  } catch {
+    throw new Error(
+      `Cannot find @mariozechner/pi-coding-agent. Looked in: ${candidate}`
+    );
+  }
+}
+
+const piRoot = findPiRoot();
+const piModules = path.join(piRoot, "node_modules");
 
 export default defineConfig({
   resolve: {

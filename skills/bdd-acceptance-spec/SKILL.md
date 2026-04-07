@@ -108,32 +108,6 @@ And I click the button with text "Log in"
 When Alice logs in with email "alice@example.com" and password "correct"
 ```
 
-## Telemetry Assertions in Acceptance Specs
-
-The acceptance layer is where telemetry emission is most important to verify — this is the outermost boundary where the events defined in the telemetry spec (PRODUCT.md) should fire. Include event assertions alongside functional assertions:
-
-```gherkin
-  Scenario: User completes onboarding
-    Given a new user
-    When they complete all three onboarding steps
-    Then they are taken to the dashboard
-    And an onboarding.completed event is emitted with user_id and session_id
-```
-
-For plain specs, assert on the event emitter or analytics client spy:
-
-```typescript
-it("emits onboarding.completed on successful onboarding", async () => {
-  const events = captureEvents();
-  await completeOnboarding(testUser);
-  expect(events).toContainEqual(
-    expect.objectContaining({ name: "onboarding.completed", user_id: testUser.id })
-  );
-});
-```
-
-If the feature has a telemetry spec in PRODUCT.md, each specified event should have a corresponding assertion in the acceptance spec.
-
 ## Step Definition Guidance
 
 Step definitions are implementation — they belong in the inner loop, not the outer spec. When writing step definitions:

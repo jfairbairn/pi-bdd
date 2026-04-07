@@ -1,13 +1,13 @@
 {
   "name": "@jfairbairn/pi-bdd",
   "version": "0.4.1",
-  "description": "Agentic software delivery system: outside-in BDD enforcement, security scanning, staged deployment, and product measurement for the pi coding agent",
+  "description": "Outside-in BDD for the pi coding agent: red-green-refactor enforcement, write gating, and the coding loop of the software lifecycle.",
   "keywords": [
     "pi-package",
     "bdd",
     "tdd",
-    "agentic",
-    "software-delivery"
+    "red-green-refactor",
+    "outside-in"
   ],
   "repository": {
     "type": "git",
@@ -34,6 +34,11 @@
     "@mariozechner/pi-coding-agent": "*",
     "@mariozechner/pi-tui": "*",
     "@sinclair/typebox": "*"
+  },
+  "peerDependenciesMeta": {
+    "@jfairbairn/pi-software-lifecycle": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.2",
