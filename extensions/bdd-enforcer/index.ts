@@ -324,18 +324,6 @@ export default function (pi: ExtensionAPI) {
 
   // ── Session events ────────────────────────────────────────────────────────
 
-  // ── Lifecycle registration ────────────────────────────────────────────
-  //
-  // Register as a coding loop implementation in the pi-software-lifecycle
-  // coordination layer (if installed). This is a fire-and-forget emit —
-  // if pi-software-lifecycle is not installed, the event is simply ignored.
-
-  pi.events.emit("lifecycle:register", {
-    loop: "coding",
-    name: "BDD",
-    description: "Outside-in BDD with red-green-refactor enforcement",
-  });
-
   pi.on("session_start", async (_event, ctx) => {
     config = loadConfig(ctx.cwd);
     state = reconstructState(ctx);
@@ -682,17 +670,6 @@ export default function (pi: ExtensionAPI) {
           ...outgoing,
         });
 
-        // Emit lifecycle handoff: coding → delivery
-        // If pi-software-lifecycle is installed, delivery plugins will pick this up.
-        pi.events.emit("lifecycle:coding_complete", {
-          type: "lifecycle:coding_complete",
-          artifact: outgoing.featureName ?? outgoing.layer ?? "cycle",
-          testsPassing: true,
-          meta: {
-            cycleType: outgoing.cycleType,
-            issueRef: outgoing.issueRef,
-          },
-        });
       } else if (params.phase === "REFACTOR") {
         state = {
           ...state,

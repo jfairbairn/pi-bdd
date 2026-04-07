@@ -35,11 +35,7 @@
     "@mariozechner/pi-tui": "*",
     "@sinclair/typebox": "*"
   },
-  "peerDependenciesMeta": {
-    "@jfairbairn/pi-software-lifecycle": {
-      "optional": true
-    }
-  },
+
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.2",
     "vitest": "^4.1.2"
