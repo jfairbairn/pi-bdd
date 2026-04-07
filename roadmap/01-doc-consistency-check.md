@@ -1,5 +1,5 @@
 ---
-status: queued
+status: building
 ---
 # Doc Consistency Check
 
