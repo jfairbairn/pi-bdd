@@ -1,5 +1,5 @@
 ---
-status: building
+status: done
 ---
 # Doc Consistency Check
 
