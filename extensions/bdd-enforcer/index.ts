@@ -23,6 +23,7 @@ import { Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { checkDocConsistency } from "./doc-checker.js";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -243,6 +244,8 @@ function parseTestOutput(stdout: string, stderr: string, exitCode: number): Test
   };
 }
 
+
+
 // ─── State reconstruction ─────────────────────────────────────────────────────
 
 function reconstructState(ctx: ExtensionContext): BDDStateDetails {
@@ -273,6 +276,71 @@ function reconstructState(ctx: ExtensionContext): BDDStateDetails {
 export default function (pi: ExtensionAPI) {
   let config: BDDConfig = DEFAULT_CONFIG;
   let state: BDDStateDetails = { _tool: "bdd_state", phase: "IDLE" };
+
+  // ── Doc consistency check ───────────────────────────────────────────────
+
+  async function runDocCheck(cwd: string): Promise<string | null> {
+    try {
+      const { stdout: deletedRaw } = await pi.exec("git", [
+        "diff", "HEAD", "--name-only", "--diff-filter=D",
+      ]);
+      const { stdout: addedRaw } = await pi.exec("git", [
+        "diff", "HEAD", "--name-only", "--diff-filter=A",
+      ]);
+
+      const deletedFiles = deletedRaw.trim().split("\n").filter(Boolean);
+      const addedFiles = addedRaw.trim().split("\n").filter(Boolean);
+
+      if (deletedFiles.length === 0 && addedFiles.length === 0) return null;
+
+      const docFiles: Array<{ path: string; content: string }> = [];
+
+      const readmeP = path.join(cwd, "README.md");
+      if (fs.existsSync(readmeP)) {
+        docFiles.push({ path: "README.md", content: fs.readFileSync(readmeP, "utf8") });
+      }
+
+      for (const dir of ["skills", "prompts"]) {
+        const dirP = path.join(cwd, dir);
+        try {
+          const entries = fs.readdirSync(dirP, { withFileTypes: true }) as fs.Dirent[];
+          for (const entry of entries) {
+            if (entry.isDirectory()) {
+              const skillP = path.join(dirP, entry.name, "SKILL.md");
+              if (fs.existsSync(skillP)) {
+                docFiles.push({
+                  path: `${dir}/${entry.name}/SKILL.md`,
+                  content: fs.readFileSync(skillP, "utf8"),
+                });
+              }
+            } else if (entry.name.endsWith(".md")) {
+              const fileP = path.join(dirP, entry.name);
+              docFiles.push({
+                path: `${dir}/${entry.name}`,
+                content: fs.readFileSync(fileP, "utf8"),
+              });
+            }
+          }
+        } catch {
+          // dir doesn't exist
+        }
+      }
+
+      if (docFiles.length === 0) return null;
+
+      const result = checkDocConsistency({ deletedFiles, addedFiles, docFiles });
+      if (result.issues.length === 0) return null;
+
+      return [
+        `\u26a0\ufe0f Doc consistency check found ${result.issues.length} issue(s):`,
+        ...result.issues.map((issue) => `  \u2022 ${issue}`),
+        "",
+        "Please review and update these references before proceeding.",
+      ].join("\n");
+    } catch {
+      return null;
+    }
+  }
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -655,6 +723,9 @@ export default function (pi: ExtensionAPI) {
       }
 
       if (params.phase === "IDLE") {
+        // Run doc consistency check before completing the cycle
+        const docCheckWarning = await runDocCheck(ctx.cwd);
+
         // Capture outgoing context BEFORE resetting state — the phase_change
         // event needs it for commit messages and downstream listeners.
         const outgoing = {
@@ -673,6 +744,13 @@ export default function (pi: ExtensionAPI) {
           to: "IDLE",
           ...outgoing,
         });
+
+        if (docCheckWarning) {
+          return {
+            content: [{ type: "text", text: `BDD phase set to ${state.phase}.\n\n${docCheckWarning}` }],
+            details: { ...state, _tool: "bdd_state" } satisfies BDDStateDetails,
+          };
+        }
 
       } else if (params.phase === "REFACTOR") {
         state = {
@@ -728,6 +806,7 @@ export default function (pi: ExtensionAPI) {
         details: { ...state, _tool: "bdd_state" } satisfies BDDStateDetails,
       };
     },
+
   });
 
   // ── report_bug tool ───────────────────────────────────────────────────────
