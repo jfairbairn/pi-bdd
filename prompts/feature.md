@@ -19,8 +19,10 @@ Then {{expected_outcome}}
 - {{edge_case_2}}
 
 ---
+If there is a design artifact for this feature in `roadmap/`, read it first — it contains the problem statement, behavioural specification, acceptance criteria, constraints, and any design facet details (UI, API, technical, etc.) produced during the steering conversation.
+
 Before writing any specs or code:
 1. Load `bdd-testing-strategy` to determine the right spec approach for the outermost boundary
-2. Write the first failing spec
+2. Write the first failing spec from the acceptance criteria
 
 Do not write any production code yet.

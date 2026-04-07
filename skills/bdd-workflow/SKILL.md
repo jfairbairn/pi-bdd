@@ -60,9 +60,19 @@ Use `/bugfix` or describe the bug. Before writing anything:
 3. Follow the type-specific first move (new regression test, correct existing test, revise spec, or non-functional spec)
 4. The rest of the cycle is identical to feature development from RED onward
 
+## Working from the Roadmap
+
+If the project has a `roadmap/` directory with numbered design artifacts, use `/build` to work through them in order. Each artifact contains the problem, behaviour, acceptance criteria, constraints, and any design details — everything the coding loop needs.
+
+The coding loop:
+1. Reads the next `queued` item from `roadmap/`
+2. Marks it `building`
+3. Works through the acceptance criteria via BDD (the step-by-step process below)
+4. Marks it `done` when all criteria are satisfied
+
 ## Step-by-Step: Starting a New Feature
 
-1. Use `/feature` template or describe the feature to establish what needs to be built
+1. Read the design artifact (from `roadmap/`, `/feature` template, or direct description)
 2. Identify the outermost boundary (acceptance test? API endpoint? UI component?)
 3. Load `bdd-testing-strategy` to determine the right spec style for that boundary
 4. Write the outer spec file
@@ -84,7 +94,11 @@ Use `/bugfix` or describe the bug. Before writing anything:
 
 ## After IDLE
 
-`set_bdd_phase("IDLE")` ends the coding cycle. What happens next depends on what other lifecycle loop plugins are installed (delivery, observation, etc.). If nothing else is configured, you're done — the code is tested and committed.
+`set_bdd_phase("IDLE")` ends the coding cycle.
+
+If working from a roadmap item, update its frontmatter to `status: done`.
+
+What happens next depends on what other lifecycle stages are configured (delivery, observation, etc.). If nothing else is configured, you're done — the code is tested and committed.
 
 ## On "Minimum Code to Go Green"
 
