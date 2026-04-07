@@ -18,11 +18,17 @@ Language: [TypeScript / Ruby / Python / Go / Rust / ...]
 Test framework: [Vitest / RSpec / pytest / go test / cargo test / ...]
 Test command: npm test
 
+## Roadmap
+
+Design artifacts live in `roadmap/` as numbered markdown files.
+Use `/build` to work through them in order via BDD.
+Load the `roadmap` skill for format details.
+
 ## File Layout
 
 Production code:  src/          (lib/ for shared libraries)
 Test/spec code:   tests/        (or spec/ for RSpec projects)
-Feature files:    features/     (Gherkin only)
+Design artifacts: roadmap/      (numbered, ordered)
 Fixtures:         tests/fixtures/
 Mocks:            tests/mocks/  (or __mocks__/ for Jest/Vitest auto-mocking)
 Test helpers:     tests/support/ (or spec/support/)

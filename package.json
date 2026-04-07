@@ -1,7 +1,7 @@
 {
   "name": "@jfairbairn/pi-bdd",
   "version": "0.4.1",
-  "description": "Outside-in BDD for the pi coding agent: red-green-refactor enforcement, write gating, and the coding loop of the software lifecycle.",
+  "description": "Outside-in BDD for the pi coding agent: red-green-refactor enforcement, write gating, roadmap-driven development.",
   "keywords": [
     "pi-package",
     "bdd",

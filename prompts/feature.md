@@ -19,7 +19,7 @@ Then {{expected_outcome}}
 - {{edge_case_2}}
 
 ---
-If there is a design artifact for this feature in `roadmap/`, read it first — it contains the problem statement, behavioural specification, acceptance criteria, constraints, and any design facet details (UI, API, technical, etc.) produced during the steering conversation.
+If there is a design artifact for this feature in `roadmap/`, read it first — it contains the problem statement, behavioural specification, acceptance criteria, constraints, and any additional design details.
 
 Before writing any specs or code:
 1. Load `bdd-testing-strategy` to determine the right spec approach for the outermost boundary

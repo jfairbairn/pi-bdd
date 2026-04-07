@@ -96,9 +96,7 @@ The coding loop:
 
 `set_bdd_phase("IDLE")` ends the coding cycle.
 
-If working from a roadmap item, update its frontmatter to `status: done`.
-
-What happens next depends on what other lifecycle stages are configured (delivery, observation, etc.). If nothing else is configured, you're done — the code is tested and committed.
+If working from a roadmap item, update its frontmatter to `status: done` and pick up the next queued item. Otherwise, you're done — the code is tested and committed.
 
 ## On "Minimum Code to Go Green"
 

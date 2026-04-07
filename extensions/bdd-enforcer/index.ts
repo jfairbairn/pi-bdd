@@ -885,7 +885,7 @@ export default function (pi: ExtensionAPI) {
       const agentsTmpl = path.join(pkgRoot, "AGENTS.md.template");
       const agentsContent = fs.existsSync(agentsTmpl)
         ? fs.readFileSync(agentsTmpl, "utf8")
-            .replace("[npm test / bundle exec rspec / pytest / go test ./...]", testCommand)
+            .replace(/Test command: .*/m, `Test command: ${testCommand}`)
         : `# Project Configuration\n\nStack: ${stackHint}\nTest command: ${testCommand}\n`;
       ensure(path.join(cwd, "AGENTS.md"), agentsContent, "AGENTS.md");
 
@@ -912,7 +912,7 @@ export default function (pi: ExtensionAPI) {
         "",
         "Next steps:",
         "  1. Review .pi/bdd.config.json — adjust paths if needed",
-        "  2. Use /feature to begin your first BDD cycle",
+        "  2. Add design artifacts to roadmap/ and use /build, or use /feature to start directly",
       ];
 
       ctx.ui.notify(lines.join("\n"), "info");
