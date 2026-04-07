@@ -1,27 +1,60 @@
 # pi-bdd
 
-Outside-in BDD for the [pi coding agent](https://github.com/badlogic/pi-mono). Implements the **coding loop** of the [software lifecycle](https://github.com/jfairbairn/pi-software-lifecycle): design → spec → build → verify, enforced through red-green-refactor discipline.
+Outside-in BDD for the [pi coding agent](https://github.com/badlogic/pi-mono). Red-green-refactor discipline with a write gate, semantic git commits, and a `roadmap/` convention for feeding design artifacts into the coding loop.
 
-## What It Does
+## How It Works
 
-**Enforces** (mechanically, not by suggestion):
-- Outside-in BDD: the agent cannot write production code until a failing test is confirmed
-- Red-green-refactor: phases are driven by actual test output, not agent judgment
-- REFACTOR boundary: write-locks declared spec files to preserve behavioural contracts
-- Semantic git history: every phase boundary commits with a meaningful message
+**Design** your features however you like — conversation with an AI, a product research agent, or just writing markdown. Put the design artifacts in `roadmap/` as numbered files.
 
-**Supports** any language and test framework: Vitest, Jest, RSpec, pytest, go test, cargo test, and others.
+**Build** with `/build`. The coding loop picks up the next queued item and implements it via BDD — writing tests first, confirming they fail, implementing the minimum code, confirming they pass, refactoring.
+
+```
+roadmap/                          The interface between design and implementation
+├── 01-project-setup.md           ← done
+├── 02-recipe-search.md           ← building (BDD cycles in progress)
+├── 03-user-avatars.md            ← queued (next up)
+└── 04-fix-login-edge-case.md     ← queued
+```
+
+## The Roadmap Convention
+
+Each file in `roadmap/` is a markdown design artifact with:
+
+```markdown
+---
+status: queued
+---
+# Recipe Search
+
+## Problem
+Users can't find recipes by ingredient.
+
+## Behaviour
+Search bar at top of list, filters as you type.
+
+## Acceptance Criteria
+- Given recipes with "chicken", when I search "chicken", then I see those recipes
+- Given no matches, when I search "xyzzy", then I see "No results"
+
+## Constraints
+- Don't modify the recipes table schema
+- Use the existing design system components
+```
+
+**Problem, Behaviour, Acceptance Criteria, Constraints** — always present. Additional sections (UI design, API design, technical architecture, etc.) can be added from whatever design skills you use. Load the `roadmap` skill for the full format specification.
+
+## What It Enforces
+
+Mechanically, not by suggestion:
+- **Write gate**: cannot write production code until a failing test is confirmed
+- **Phase transitions**: driven by actual test output, not agent judgment
+- **REFACTOR boundary**: write-locks declared spec files to preserve contracts
+- **Semantic git history**: every phase boundary commits with a meaningful message
 
 ## Installation
 
 ```bash
 pi install git:github.com/jfairbairn/pi-bdd
-```
-
-Optionally install the lifecycle coordination layer for integration with delivery, observation, and steering plugins:
-
-```bash
-pi install @jfairbairn/pi-software-lifecycle
 ```
 
 ## Setup
@@ -37,7 +70,15 @@ Create `.pi/bdd.config.json` in your project (or run `/bdd-setup` to auto-detect
 }
 ```
 
-Use `/feature` to start your first BDD cycle.
+## Prompts
+
+| Prompt | When to use |
+|--------|------------|
+| `/build` | Work through the next roadmap item via BDD |
+| `/feature` | Start a feature (with or without a roadmap item) |
+| `/scenario` | Add a scenario to an existing feature |
+| `/bugfix` | Start a bug fix cycle |
+| `/refactor` | Enter the refactor phase |
 
 ## Tools
 
@@ -47,40 +88,27 @@ Use `/feature` to start your first BDD cycle.
 | `set_bdd_phase` | Advance to REFACTOR, IDLE, or AWAITING_RED |
 | `report_bug` | Start a bug fix cycle with type classification |
 
-## Commands
-
-| Command | What it shows |
-|---------|--------------|
-| `/bdd` | Current BDD phase and state |
-| `/bdd-setup` | Auto-detect stack and create config |
-
-## Prompts
-
-| Prompt | When to use |
-|--------|------------|
-| `/feature` | Start a new feature with outside-in BDD |
-| `/scenario` | Add a scenario to an existing feature |
-| `/bugfix` | Start a bug fix cycle |
-| `/refactor` | Enter the refactor phase |
-
 ## Skills
 
 | Skill | What it teaches the agent |
 |-------|--------------------------|
+| `roadmap` | The `roadmap/` file format, status tracking, universal core |
 | `bdd-workflow` | The full outside-in red-green-refactor cycle |
 | `bdd-testing-strategy` | How to choose the right spec style for each layer |
 | `bdd-acceptance-spec` | Writing acceptance-level specs (Gherkin and plain) |
 | `bdd-bug-workflow` | BDD approach to bug fixing (four bug types) |
 | `bdd-refactor` | Safe refactoring within the REFACTOR phase |
 
-## Lifecycle Integration
+## Bring Your Own Design Skills
 
-When `@jfairbairn/pi-software-lifecycle` is installed, pi-bdd:
-- Registers as a **coding loop** implementation
-- Emits `lifecycle:coding_complete` when a BDD cycle reaches IDLE
-- Delivery plugins (if any) can listen for this to trigger their workflow
+Pi-bdd has no opinion on how you design. The `roadmap/` format is the contract. Use whatever design skills suit your project:
 
-Without the lifecycle package, pi-bdd works standalone — just the BDD discipline, nothing else.
+- Anthropic's frontend design skill for web UIs
+- A game design skill for game mechanics
+- Your own domain-specific skills
+- Or just write the markdown by hand
+
+As long as the design artifact has the universal core (problem, behaviour, acceptance criteria, constraints), the coding loop can implement it.
 
 ## Requirements
 
