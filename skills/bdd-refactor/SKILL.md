@@ -15,6 +15,7 @@ Refactoring means improving the structure of code without changing its behaviour
 4. **If tests go red: revert immediately.** Understand why, then try a smaller step.
 5. **Do not add behaviour** — if you spot a missing case, write a spec for it in the next cycle
 6. **Do not expand scope** — only touch code written in this cycle
+7. **Do not edit boundary specs** — they are write-locked during REFACTOR (enforced mechanically)
 
 ## What Counts as Refactoring
 
@@ -37,6 +38,12 @@ Refactoring means improving the structure of code without changing its behaviour
 | Changing error handling behaviour | Write a spec for the new behaviour — next cycle |
 | Optimising an algorithm | Write a performance spec or benchmark first |
 | Restructuring the entire module | Break into multiple small refactors |
+
+## Boundary Specs
+
+When entering REFACTOR, declare boundary specs via `set_bdd_phase("REFACTOR", boundarySpecs: ["path/to/spec"])`. These are the outermost specs that define the public behavioural contract — typically the acceptance spec or API contract test written at the start of this cycle.
+
+The system will block any write or edit to these files during REFACTOR. If the behaviour itself needs to change, exit REFACTOR first, update the spec in a new cycle.
 
 ## Completion
 

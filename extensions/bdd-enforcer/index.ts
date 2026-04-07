@@ -8,8 +8,9 @@
  *
  * Enforcement:
  *   - Blocks write/edit to production paths when phase is IDLE or AWAITING_RED
+ *   - Blocks write/edit to declared boundary specs during REFACTOR
  *   - Parses test output from bash and run_tests tool to drive phase transitions
- *   - Injects current phase context into every agent turn
+ *   - Injects BDD methodology and current phase context into every agent turn
  *   - Shows phase prominently in footer status
  *
  * Config (.pi/bdd.config.json or project root bdd.config.json):
@@ -93,7 +94,7 @@ const BUG_TYPE_LABELS: Record<BugType, string> = {
 };
 
 const PHASE_INSTRUCTIONS: Record<BDDPhase, string> = {
-  IDLE: `No active BDD cycle. Use /feature or /scenario to begin, or describe what you want to build.`,
+  IDLE: `No active BDD cycle. Use /build to work through the roadmap, or describe what you want to build.`,
 
   AWAITING_RED: `A spec has been written but not yet confirmed failing.
 REQUIRED: Run the tests now to confirm they fail before writing any production code.
@@ -305,7 +306,10 @@ export default function (pi: ExtensionAPI) {
     ].filter(Boolean) : [];
 
     return [
-      `\n=== BDD Phase: ${state.phase}${state.cycleType === "bug" ? " (BUG FIX)" : ""} ===`,
+      `\n=== BDD Enforcement: Active ===`,
+      `This project uses outside-in BDD with strict red-green-refactor.`,
+      `Write a failing test before any production code. Production writes are gated.`,
+      `Phase: ${state.phase}${state.cycleType === "bug" ? " (BUG FIX)" : ""}`,
       PHASE_INSTRUCTIONS[state.phase],
       ...bugContext,
       state.featureName ? `Active feature: ${state.featureName}` : "",
@@ -836,7 +840,7 @@ export default function (pi: ExtensionAPI) {
   // ── /bdd-setup command ───────────────────────────────────────────────────
 
   pi.registerCommand("bdd-setup", {
-    description: "First-run setup for a new project. Creates AGENTS.md, config files, and project templates.",
+    description: "First-run setup for a new project. Detects stack and creates .pi/bdd.config.json.",
     handler: async (_args, ctx) => {
       const cwd = ctx.cwd;
       const created: string[] = [];
@@ -879,16 +883,6 @@ export default function (pi: ExtensionAPI) {
         stackHint = "Rust (cargo)";
       }
 
-      // ── Create AGENTS.md ──────────────────────────────────────────────────
-      // Find the package root so we can reference templates
-      const pkgRoot = path.resolve(__dirname, "..", "..");
-      const agentsTmpl = path.join(pkgRoot, "AGENTS.md.template");
-      const agentsContent = fs.existsSync(agentsTmpl)
-        ? fs.readFileSync(agentsTmpl, "utf8")
-            .replace(/Test command: .*/m, `Test command: ${testCommand}`)
-        : `# Project Configuration\n\nStack: ${stackHint}\nTest command: ${testCommand}\n`;
-      ensure(path.join(cwd, "AGENTS.md"), agentsContent, "AGENTS.md");
-
       // ── Create .pi/bdd.config.json ────────────────────────────────────────
       const bddConfig = {
         productionPaths: ["src/", "lib/", "app/"],
@@ -912,7 +906,8 @@ export default function (pi: ExtensionAPI) {
         "",
         "Next steps:",
         "  1. Review .pi/bdd.config.json — adjust paths if needed",
-        "  2. Add design artifacts to roadmap/ and use /build, or use /feature to start directly",
+        "  2. Write a README.md if you don't have one (product context lives there)",
+        "  3. Add design artifacts to roadmap/ and use /build to work through them",
       ];
 
       ctx.ui.notify(lines.join("\n"), "info");

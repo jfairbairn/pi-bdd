@@ -75,10 +75,14 @@ Create `.pi/bdd.config.json` in your project (or run `/bdd-setup` to auto-detect
 | Prompt | When to use |
 |--------|------------|
 | `/build` | Work through the next roadmap item via BDD |
-| `/feature` | Start a feature (with or without a roadmap item) |
-| `/scenario` | Add a scenario to an existing feature |
 | `/bugfix` | Start a bug fix cycle |
-| `/refactor` | Enter the refactor phase |
+
+## Commands
+
+| Command | What it does |
+|---------|-------------|
+| `/bdd-setup` | Detect stack and create `.pi/bdd.config.json` |
+| `/bdd` | Show current BDD phase, state, and config |
 
 ## Tools
 
@@ -109,6 +113,21 @@ Pi-bdd has no opinion on how you design. The `roadmap/` format is the contract. 
 - Or just write the markdown by hand
 
 As long as the design artifact has the universal core (problem, behaviour, acceptance criteria, constraints), the coding loop can implement it.
+
+## Autonomous Operation
+
+The coding loop runs autonomously when given a populated `roadmap/` directory:
+
+```bash
+while true; do
+  git pull --rebase
+  pi --no-input --prompt "/build"
+  [ $? -ne 0 ] && break
+  git push
+done
+```
+
+The git checkpoint extension auto-commits at every BDD phase boundary with semantic messages (`test(red):`, `feat(green):`, `fix:`, `refactor:`).
 
 ## Requirements
 

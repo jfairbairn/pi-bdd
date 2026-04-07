@@ -14,7 +14,7 @@ At every level:
 2. **Run tests** (`run_tests`) → confirm RED
 3. **Write minimum production code** to satisfy the spec
 4. **Run tests** → confirm GREEN
-5. **Refactor** without changing behaviour → `set_bdd_phase(REFACTOR)` → run tests → confirm still GREEN
+5. **Refactor** without changing behaviour → `set_bdd_phase(REFACTOR, boundarySpecs)` → run tests → confirm still GREEN
 6. **Commit** → `set_bdd_phase(IDLE)` or loop to next scenario/layer
 
 ## The Double Loop
@@ -42,13 +42,13 @@ At every level:
 
 ## Phase Rules (enforced by the system)
 
-| Phase | What you can do | What is blocked |
+| Phase | What you can do | What is blocked (mechanically) |
 |---|---|---|
-| IDLE | Write specs, feature files | Production code writes |
+| IDLE | Write specs | Production code writes |
 | AWAITING_RED | Write specs | Production code writes |
 | RED | Write production code, write specs | — |
 | GREEN | Refactor, write next inner spec | — |
-| REFACTOR | Refactor only | — |
+| REFACTOR | Refactor production code and non-boundary tests | Boundary spec writes (declared via `boundarySpecs`) |
 
 **The system will block writes to production paths in IDLE and AWAITING_RED. Do not attempt workarounds.**
 
@@ -72,7 +72,7 @@ The coding loop:
 
 ## Step-by-Step: Starting a New Feature
 
-1. Read the design artifact (from `roadmap/`, `/feature` template, or direct description)
+1. Read the design artifact (from `roadmap/` or direct description)
 2. Identify the outermost boundary (acceptance test? API endpoint? UI component?)
 3. Load `bdd-testing-strategy` to determine the right spec style for that boundary
 4. Write the outer spec file
@@ -89,7 +89,7 @@ The coding loop:
    g. `set_bdd_phase("AWAITING_RED")` for next inner layer, or proceed to outer
 9. Implement outer layer
 10. `run_tests()` (all tests, not just focused) → confirm outer GREEN
-11. `set_bdd_phase("REFACTOR")` → refactor → `run_tests` → GREEN
+11. `set_bdd_phase("REFACTOR", boundarySpecs: ["<outer-spec-path>"])` → refactor → `run_tests` → GREEN
 12. `set_bdd_phase("IDLE")` → BDD cycle complete
 
 ## After IDLE
